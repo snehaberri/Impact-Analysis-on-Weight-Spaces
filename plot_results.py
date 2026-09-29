@@ -9,6 +9,10 @@ import numpy as np
 from scipy.stats import spearmanr
 
 RUNS = Path(__file__).resolve().parent
+FASHION_CLASSES = [
+    "T-shirt/top", "Trouser", "Pullover", "Dress", "Coat",
+    "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot",
+]
 
 
 def load(tag):
@@ -18,7 +22,12 @@ def load(tag):
 
 def report(tag):
     d = load(tag)
-    print(f"\n=== {tag} (digit {d['d0']} -> digit {d['d1']}) ===")
+    dataset = d.get("dataset", "mnist")
+    fashion = dataset != "mnist"
+    family = "FashionMNIST" if fashion else "MNIST"
+    class0 = FASHION_CLASSES[d["d0"]] if fashion else str(d["d0"])
+    class1 = FASHION_CLASSES[d["d1"]] if fashion else str(d["d1"])
+    print(f"\n=== {tag} ({family}: {class0} -> {class1}) ===")
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.2), sharey=False)
     regimes = [("a", "independent init"), ("b", "shared init"), ("c", "warm-start")]
 
@@ -36,7 +45,7 @@ def report(tag):
 
         ax.scatter(dt, raw, s=14, alpha=0.5, label=f"raw (ρ={rho_raw:.2f})", color="tab:red")
         ax.scatter(dt, aligned, s=14, alpha=0.5, label=f"aligned (ρ={rho_aligned:.2f})", color="tab:blue")
-        ax.set_xlabel("|Δt|  (ground-truth image distance)")
+        ax.set_xlabel(f"|Δt|  ({family} image distance)")
         ax.set_ylabel("weight distance")
         ax.set_title(f"regime ({key}): {title}")
         ax.legend(fontsize=8)
@@ -50,6 +59,20 @@ def report(tag):
     out_path = RUNS / f"{tag}_distance_vs_dt.png"
     plt.savefig(out_path, dpi=130)
     print(f"  saved {out_path}")
+
+    if "image0" in d and "image1" in d:
+        fig0, axes0 = plt.subplots(1, 3, figsize=(8, 3))
+        images = [d["image0"], (d["image0"] + d["image1"]) / 2, d["image1"]]
+        labels = [f"t=0: {class0}", "t=0.5: morph", f"t=1: {class1}"]
+        for ax, img, label in zip(axes0, images, labels):
+            ax.imshow(img.squeeze().cpu().numpy(), cmap="gray", vmin=0, vmax=1)
+            ax.set_title(label)
+            ax.axis("off")
+        fig0.suptitle(f"{family} input pair and midpoint")
+        plt.tight_layout()
+        morph_path = RUNS / f"{tag}_morph.png"
+        plt.savefig(morph_path, dpi=130)
+        print(f"  saved {morph_path}")
 
     # basin-jump detector on regime (c) consecutive distances
     consec = d["consec_c"]
@@ -75,6 +98,9 @@ def report(tag):
 
 
 if __name__ == "__main__":
-    tags = sys.argv[1:] if len(sys.argv) > 1 else ["easy_1_1", "hard_3_8"]
+    tags = sys.argv[1:] if len(sys.argv) > 1 else [
+        "easy_1_1_mnist", "easy_1_1_fashionmnist",
+        "hard_3_8_mnist", "hard_3_8_fashionmnist",
+    ]
     for t in tags:
         report(t)

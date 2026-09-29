@@ -2,7 +2,8 @@
 a digit-morph pair, compute raw/aligned weight distance + functional distance
 vs |delta t|, and save checkpoints + a results dict to disk.
 
-Usage: python run_experiment.py --d0 3 --d1 8 --n 20 --tag hard_3_8
+Usage: python run_experiment.py --d0 3 --d1 8 --n 20
+       python plot_results.py hard_3_8_mnist hard_3_8_fashionmnist
 """
 import argparse
 import pickle
@@ -21,8 +22,9 @@ OUT.mkdir(exist_ok=True)
 
 
 def run(d0, d1, n_t, tag, hidden=64, steps=500, warm_steps=100, lr=1e-3, n_align_pairs=40,
-        idx0=0, idx1=1):
-    I0, I1 = get_digit_image(d0, idx0), get_digit_image(d1, idx1)
+        idx0=0, idx1=1, dataset="mnist"):
+    I0 = get_digit_image(d0, idx0, dataset=dataset)
+    I1 = get_digit_image(d1, idx1, dataset=dataset)
     res = image_res(I0)
     coords = coord_grid(res)
     t_values = np.linspace(0, 1, n_t)
@@ -83,7 +85,8 @@ def run(d0, d1, n_t, tag, hidden=64, steps=500, warm_steps=100, lr=1e-3, n_align
         })
 
     out = {
-        "tag": tag, "d0": d0, "d1": d1, "hidden": hidden, "res": res,
+        "tag": tag, "d0": d0, "d1": d1, "dataset": dataset,
+        "hidden": hidden, "res": res, "image0": I0, "image1": I1,
         "t_values": t_values, "fit_losses": fit_losses,
         "dist_a": dist_a, "dist_b": dist_b, "dist_c": dist_c,
         "consec_c": consec_c,
@@ -99,11 +102,23 @@ if __name__ == "__main__":
     p.add_argument("--d0", type=int, default=1)
     p.add_argument("--d1", type=int, default=1)
     p.add_argument("--n", type=int, default=20, help="number of t values")
-    p.add_argument("--tag", type=str, default="easy_1_1")
+    p.add_argument("--tag", type=str, default=None,
+                   help="base output tag; dataset-specific suffixes are added automatically")
+    p.add_argument("--dataset", choices=["both", "mnist", "fashion-mnist"], default="both")
     p.add_argument("--steps", type=int, default=500)
     p.add_argument("--hidden", type=int, default=64)
     p.add_argument("--idx0", type=int, default=0)
     p.add_argument("--idx1", type=int, default=1)
     args = p.parse_args()
-    run(args.d0, args.d1, args.n, args.tag, hidden=args.hidden, steps=args.steps,
-        idx0=args.idx0, idx1=args.idx1)
+    if args.tag:
+        base_tag = args.tag
+    else:
+        prefix = "easy" if args.d0 == args.d1 else "hard"
+        base_tag = f"{prefix}_{args.d0}_{args.d1}"
+
+    datasets_to_run = ("mnist", "fashion-mnist") if args.dataset == "both" else (args.dataset,)
+    for dataset in datasets_to_run:
+        suffix = "mnist" if dataset == "mnist" else "fashionmnist"
+        tag = f"{base_tag}_{suffix}"
+        run(args.d0, args.d1, args.n, tag, hidden=args.hidden, steps=args.steps,
+            idx0=args.idx0, idx1=args.idx1, dataset=dataset)
