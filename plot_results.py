@@ -65,7 +65,6 @@ def report(tag):
     out_path = RUNS / f"{tag}_distance_vs_dt.png"
     plt.savefig(out_path, dpi=130)
     print(f"  saved {out_path}")
-
     if "image0" in d and "image1" in d or "image2" in d:
         fig0, axes0 = plt.subplots(1, 3, figsize=(8, 3))
         images = [d["image0"], (d["image0"] + d["image1"]) / 2, d["image1"]]
