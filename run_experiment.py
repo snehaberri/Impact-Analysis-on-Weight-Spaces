@@ -104,7 +104,8 @@ if __name__ == "__main__":
     p.add_argument("--n", type=int, default=20, help="number of t values")
     p.add_argument("--tag", type=str, default=None,
                    help="base output tag; dataset-specific suffixes are added automatically")
-    p.add_argument("--dataset", choices=["both", "mnist", "fashion-mnist"], default="both")
+    p.add_argument("--dataset", choices=["all", "both", "mnist", "fashion-mnist", "cifar10"],
+                   default="all")
     p.add_argument("--steps", type=int, default=500)
     p.add_argument("--hidden", type=int, default=64)
     p.add_argument("--idx0", type=int, default=0)
@@ -116,9 +117,12 @@ if __name__ == "__main__":
         prefix = "easy" if args.d0 == args.d1 else "hard"
         base_tag = f"{prefix}_{args.d0}_{args.d1}"
 
-    datasets_to_run = ("mnist", "fashion-mnist") if args.dataset == "both" else (args.dataset,)
+    datasets_to_run = (
+        ("mnist", "fashion-mnist", "cifar10")
+        if args.dataset in ("all", "both") else (args.dataset,)
+    )
     for dataset in datasets_to_run:
-        suffix = "mnist" if dataset == "mnist" else "fashionmnist"
+        suffix = {"mnist": "mnist", "fashion-mnist": "fashionmnist", "cifar10": "cifar10"}[dataset]
         tag = f"{base_tag}_{suffix}"
         run(args.d0, args.d1, args.n, tag, hidden=args.hidden, steps=args.steps,
             idx0=args.idx0, idx1=args.idx1, dataset=dataset)

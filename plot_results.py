@@ -13,6 +13,10 @@ FASHION_CLASSES = [
     "T-shirt/top", "Trouser", "Pullover", "Dress", "Coat",
     "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot",
 ]
+CIFAR_CLASSES =[
+    "airplane", "automobile", "bird", "cat", "deer", "dog",
+    "frog", "horse", "ship", "truck"
+]
 
 
 def load(tag):
@@ -23,10 +27,12 @@ def load(tag):
 def report(tag):
     d = load(tag)
     dataset = d.get("dataset", "mnist")
-    fashion = dataset != "mnist"
-    family = "FashionMNIST" if fashion else "MNIST"
-    class0 = FASHION_CLASSES[d["d0"]] if fashion else str(d["d0"])
-    class1 = FASHION_CLASSES[d["d1"]] if fashion else str(d["d1"])
+    fashion = dataset in ("fashion", "fashion-mnist", "fashion_mnist")
+    cifar = dataset in ("cifar", "cifar10", "cifar-10")
+    family = "CIFAR-10" if cifar else "FashionMNIST" if fashion else "MNIST"
+    classes = CIFAR_CLASSES if cifar else FASHION_CLASSES
+    class0 = classes[d["d0"]] if fashion or cifar else str(d["d0"])
+    class1 = classes[d["d1"]] if fashion or cifar else str(d["d1"])
     print(f"\n=== {tag} ({family}: {class0} -> {class1}) ===")
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.2), sharey=False)
     regimes = [("a", "independent init"), ("b", "shared init"), ("c", "warm-start")]
@@ -60,7 +66,7 @@ def report(tag):
     plt.savefig(out_path, dpi=130)
     print(f"  saved {out_path}")
 
-    if "image0" in d and "image1" in d:
+    if "image0" in d and "image1" in d or "image2" in d:
         fig0, axes0 = plt.subplots(1, 3, figsize=(8, 3))
         images = [d["image0"], (d["image0"] + d["image1"]) / 2, d["image1"]]
         labels = [f"t=0: {class0}", "t=0.5: morph", f"t=1: {class1}"]
@@ -100,7 +106,9 @@ def report(tag):
 if __name__ == "__main__":
     tags = sys.argv[1:] if len(sys.argv) > 1 else [
         "easy_1_1_mnist", "easy_1_1_fashionmnist",
+        "easy_1_1_cifar10",
         "hard_3_8_mnist", "hard_3_8_fashionmnist",
+        "hard_3_8_cifar10",
     ]
     for t in tags:
         report(t)
