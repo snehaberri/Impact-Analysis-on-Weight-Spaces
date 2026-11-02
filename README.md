@@ -2,7 +2,7 @@
 
 Do SIRENs trained on visually similar images converge to nearby points in weight space? This project investigates how **initialization and training regime** shape where implicit neural representations (INRs) end up, and whether apparent distance between networks reflects real functional differences or just permutation symmetry.
 
-> College research project. Written up as an IEEE-format paper (preprint, not peer-reviewed). [Paper/poster link here]
+> College research project. Written up as an IEEE-format paper (preprint, not peer-reviewed). (https://drive.google.com/file/d/1XPZBTPqHS6rt-kaJEqcjpEhj-bcprpHi/view?usp=sharing)
 
 ## Overview
 
